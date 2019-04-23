@@ -85,8 +85,8 @@ class Context(object):
     
     @property
     def producer(self):
-	    if self._kafka_producer is None:
-	        self._kafka_producer = KafkaProducer(bootstrap_servers='10.3.88.117:9092')
+	    #if self._kafka_producer is None:
+	    #    self._kafka_producer = KafkaProducer(bootstrap_servers='10.3.88.117:9092')
 	    return self._kafka_producer
 
 
@@ -144,7 +144,7 @@ def set_metrics(ctx, timestamp, data):
                 with open(Analyzer.METRIC_FILE, 'a') as metricf:
                     metricf.write(str(con))
                     message = "prm," + str(con)
-                    ctx.producer.send("lightsaber_metrics", str.encode(message))
+                    #ctx.producer.send("lightsaber_metrics", str.encode(message))
 
                 if ctx.args.enable_prometheus:
                     ctx.prometheus.send_metrics(con.name, con.utils,
@@ -499,7 +499,7 @@ def main():
                     Metric.CPI, Metric.L3MPKI, Metric.L3MISS, Metric.NF,
                     Metric.UTIL, Metric.L3OCC, Metric.MBL, Metric.MBR,
                     Metric.L2STALL, Metric.MEMSTALL, Metric.L2SPKI,
-                    Metric.MSPKI]
+                    Metric.MSPKI, Metric.MIPS, Metric.MIPSC0]
             with open(Analyzer.METRIC_FILE, 'w') as metricf:
                 metricf.write(','.join(cols) + '\n')
         ctx.pgos = Pgos(cpu_count(), ctx.args.metric_interval * 1000 - 500)

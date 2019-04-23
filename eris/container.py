@@ -56,6 +56,8 @@ class Container(object):
         self.pids = pids
         self.cpu_usage = 0
         self.system_usage = 0
+        self.total_time = 0
+        self.total_c0_time = 0
         self.utils = 0
         self.timestamp = 0.0
         self.thresh = thresh
@@ -92,6 +94,8 @@ class Container(object):
             metrics[Metric.MEMSTALL],
             metrics[Metric.L2SPKI],
             metrics[Metric.MSPKI],
+            metrics[Metric.MIPS],
+            metrics[Metric.MIPSC0],
         ]
         return ','.join(str(col) for col in cols) + '\n'
 
@@ -102,7 +106,8 @@ class Container(object):
                         (Metric.L3OCC, int), (Metric.MBL, float),
                         (Metric.MBR, float), (Metric.L2STALL, int),
                         (Metric.MEMSTALL, int), (Metric.L2SPKI, float),
-                        (Metric.MSPKI, float)]
+                        (Metric.MSPKI, float), (Metric.MIPS, float),
+                        (Metric.MIPSC0, float)]
         for key, converter in key_mappings:
             self.metrics[key] = converter(row_tuple[1][key])
         self.utils = float(row_tuple[1][Metric.UTIL])
@@ -143,6 +148,8 @@ class Container(object):
                 metrics[Metric.L3MPKI] = 0
                 metrics[Metric.L2SPKI] = 0
                 metrics[Metric.MSPKI] = 0
+                metrics[Metric.MIPS] = 0
+                metrics[Metric.MIPSC0] = 0
             else:
                 metrics[Metric.CPI] = metrics[Metric.CYC] /\
                     metrics[Metric.INST]
@@ -152,6 +159,10 @@ class Container(object):
                     metrics[Metric.INST]
                 metrics[Metric.MSPKI] = metrics[Metric.MEMSTALL] * 1000 /\
                     metrics[Metric.INST]
+                metrics[Metric.MIPS] = metrics[Metric.INST] * 1000 / self.total_time
+                metrics[Metric.MIPSC0] = metrics[Metric.INST] * 1000 / self.total_c0_time
+
+
             if self.utils == 0:
                 metrics[Metric.NF] = 0
             else:
@@ -168,6 +179,7 @@ class Container(object):
         
     def update_cpu_usage(self):
         try:
+            cur = time.time() * 1e9
             total_usage = 0
             system_usage = 0
             #ticks_per_second = os.sysconf_names['SC_CLK_TCK']
@@ -188,14 +200,23 @@ class Container(object):
             #print(container_stats['cpu_stats']['cpu_usage']['total_usage'])
             #print(container_stats['cpu_stats']['system_cpu_usage'])
             
-            cpus = 28
+            cpus = 44
             cpu_delta = total_usage - self.cpu_usage
             system_delta = system_usage - self.system_usage
             if system_usage != 0:
                 self.utils = (float(cpu_delta) / system_delta) * cpus * 100
+            
+            total_time = cur - self.timestamp
+
+            #self.metrics[Metric.MIPS] = self.metrics[Metric.INST] * 1000 / total_time
+            #self.metrics[Metrcs.MIPSC0] = self.metrics[Metric.INST] * 1000 / cpu_delta
 
             self.cpu_usage = total_usage
             self.system_usage = system_usage
+            self.timestamp = cur
+            self.total_time = total_time
+            self.total_c0_time = cpu_delta
+
             #print("util")
             #print(self.utils) 
         except (ValueError, IOError):

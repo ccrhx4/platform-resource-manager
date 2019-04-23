@@ -49,7 +49,8 @@ class Metric(str, Enum):
     LCCAPACITY = 'latency_critical_utilization_capacity'
     LCMAX = 'latency_critical_utilization_max'
     SYSUTIL = 'system_utilization'
-
+    MIPS = 'millions_instructions_per_second'
+    MIPSC0 = 'millions_instructions_per_c0_second'
 
 class Analyzer:
     UTIL_FILE = 'util.csv'
